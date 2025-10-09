@@ -14,9 +14,14 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import FloodMap from '../map/FloodMap';
-import { sosRequests } from '../../data/mockData';
+import { FloodZone, SOSRequest } from '../../types';
 
-const RescueDashboard: React.FC = () => {
+interface RescueDashboardProps {
+  floodZones: FloodZone[];
+  sosRequests: SOSRequest[];
+}
+
+const RescueDashboard: React.FC<RescueDashboardProps> = ({ floodZones, sosRequests }) => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('assignments');
 
@@ -148,7 +153,7 @@ const RescueDashboard: React.FC = () => {
                           </div>
                           <div className="flex items-center">
                             <Clock className="w-4 h-4 mr-2" />
-                            <span>Reported: {sos.timestamp.toLocaleString()}</span>
+                            <span>Reported: {new Date(sos.timestamp).toLocaleString()}</span>
                           </div>
                         </div>
 
@@ -221,7 +226,7 @@ const RescueDashboard: React.FC = () => {
                 className="bg-white rounded-lg p-6 shadow-sm h-[75vh]"
               >
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Rescue Operations Map</h2>
-                <FloodMap showSOS={true} />
+                <FloodMap zones={floodZones} sosRequests={sosRequests} showSOS={true} />
               </motion.div>
             )}
 

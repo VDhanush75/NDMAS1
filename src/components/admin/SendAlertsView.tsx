@@ -1,16 +1,17 @@
-import React, { useState, useMemo } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { alerts as allAlerts } from '../../data/mockData';
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { Alert } from '../../types';
 import { indianStates } from '../../data/locations';
-import { AlertTriangle, Send, Info, Eye } from 'lucide-react';
+import { AlertTriangle, Send, PlusCircle, Edit, Trash2 } from 'lucide-react';
+import Modal from '../common/Modal';
 
 type Severity = 'critical' | 'high' | 'warning' | 'info';
 
-const severityOptions: { value: Severity; label: string; color: string; textColor: string; ringColor: string; }[] = [
-    { value: 'critical', label: 'Critical (Danger)', color: 'bg-red-500', textColor: 'text-red-500', ringColor: 'focus:ring-red-500' },
-    { value: 'high', label: 'High Risk', color: 'bg-orange-500', textColor: 'text-orange-500', ringColor: 'focus:ring-orange-500' },
-    { value: 'warning', label: 'Warning (Low Risk)', color: 'bg-yellow-500', textColor: 'text-yellow-500', ringColor: 'focus:ring-yellow-500' },
-    { value: 'info', label: 'Safe / Info', color: 'bg-blue-500', textColor: 'text-blue-500', ringColor: 'focus:ring-blue-500' },
+const severityOptions: { value: Severity; label: string; color: string; }[] = [
+    { value: 'critical', label: 'Critical', color: 'bg-red-500' },
+    { value: 'high', label: 'High', color: 'bg-orange-500' },
+    { value: 'warning', label: 'Warning', color: 'bg-yellow-500' },
+    { value: 'info', label: 'Info', color: 'bg-blue-500' },
 ];
 
 const getSeverityClass = (severity: Severity) => {
@@ -22,75 +23,90 @@ const getSeverityClass = (severity: Severity) => {
     }
 };
 
-const SendAlertsView: React.FC = () => {
-    const { user } = useAuth();
-    
-    // State for Central Admin Form
-    const [severity, setSeverity] = useState<Severity>('warning');
-    const [title, setTitle] = useState('');
-    const [message, setMessage] = useState('');
-    const [targetScope, setTargetScope] = useState('all'); // 'all', 'state', 'district'
-    const [selectedState, setSelectedState] = useState('');
-    const [selectedDistrict, setSelectedDistrict] = useState('');
+type AlertFormData = Omit<Alert, 'id' | 'timestamp' | 'language'>;
 
-    const handleSendAlert = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!title || !message) {
-            alert('Please fill in the title and message for the alert.');
-            return;
-        }
+const SendAlertsView: React.FC<{ initialAlerts: Alert[], setAlerts: React.Dispatch<React.SetStateAction<Alert[]>> }> = ({ initialAlerts, setAlerts }) => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingAlert, setEditingAlert] = useState<Alert | null>(null);
 
-        let target = 'All India';
-        if (targetScope === 'state' && selectedState) {
-            target = selectedState;
-        } else if (targetScope === 'district' && selectedState && selectedDistrict) {
-            target = `${selectedDistrict}, ${selectedState}`;
-        }
+    const { register, handleSubmit, reset, setValue, watch } = useForm<AlertFormData>();
 
-        const newAlert = {
-            id: `A${Date.now()}`,
-            title,
-            message,
-            severity,
-            targetAreas: [target],
-            language: 'english',
-            timestamp: new Date(),
-        };
-
-        // In a real app, this would be an API call. Here we just log it.
-        console.log('Sending Alert:', newAlert);
-        alert(`Alert Sent!\nSeverity: ${severity}\nTarget: ${target}\nTitle: ${title}`);
-        
-        // Reset form
-        setTitle('');
-        setMessage('');
+    const openModalForEdit = (alert: Alert) => {
+        setEditingAlert(alert);
+        setValue('title', alert.title);
+        setValue('message', alert.message);
+        setValue('severity', alert.severity as Severity);
+        setValue('targetAreas', alert.targetAreas);
+        setValue('targetRoles', alert.targetRoles);
+        setIsModalOpen(true);
     };
 
-    if (user?.adminLevel !== 'central') {
-        // Monitoring view for State and District Admins
-        return (
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-                <div className="flex items-center bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md mb-6">
-                    <Eye className="w-6 h-6 text-blue-600 mr-3" />
-                    <div>
-                        <h2 className="text-lg font-semibold text-blue-800">Alert Monitoring Mode</h2>
-                        <p className="text-blue-700">You are viewing alerts for your jurisdiction. Alert dispatch is managed by the Central Authority.</p>
-                    </div>
-                </div>
+    const openModalForNew = () => {
+        setEditingAlert(null);
+        reset({ title: '', message: '', severity: 'warning', targetAreas: ['all'], targetRoles: [] });
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setEditingAlert(null);
+        reset();
+    };
+
+    const onSubmit = (data: AlertFormData) => {
+        if (editingAlert) {
+            const updatedAlert: Alert = { ...editingAlert, ...data };
+            setAlerts(initialAlerts.map(a => a.id === editingAlert.id ? updatedAlert : a));
+        } else {
+            const newAlert: Alert = {
+                id: `A${Date.now()}`,
+                timestamp: new Date(),
+                language: 'english',
+                ...data,
+            };
+            setAlerts(prev => [newAlert, ...prev]);
+        }
+        closeModal();
+    };
+
+    const handleDelete = (id: string) => {
+        if (window.confirm('Are you sure you want to delete this alert?')) {
+            setAlerts(initialAlerts.filter(a => a.id !== id));
+        }
+    };
+
+    return (
+        <div className="space-y-8">
+            <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-gray-900">Alerts Management</h2>
+                <button onClick={openModalForNew} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 flex items-center transition-colors">
+                    <PlusCircle className="w-5 h-5 mr-2" /> Create Alert
+                </button>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 className="text-xl font-semibold text-gray-800 mb-4">Dispatched Alerts</h3>
                 <div className="space-y-4">
-                    {allAlerts.map((alert) => {
-                        const severityClasses = getSeverityClass(alert.severity as any);
+                    {initialAlerts.map(alert => {
+                        const severityClasses = getSeverityClass(alert.severity as Severity);
                         return (
-                            <div key={alert.id} className={`p-4 rounded-lg border-l-4 ${severityClasses.border} ${severityClasses.bg}`}>
-                                <div className="flex items-start">
-                                    <AlertTriangle className={`w-6 h-5 mr-3 mt-1 flex-shrink-0 ${severityClasses.text}`} />
-                                    <div>
-                                        <p className={`font-semibold ${severityClasses.text}`}>{alert.title}</p>
-                                        <p className="text-sm text-gray-700 mt-1">{alert.message}</p>
-                                        <div className="flex items-center justify-between mt-2">
-                                            <p className="text-xs text-gray-500">{new Date(alert.timestamp).toLocaleString()}</p>
-                                            <p className="text-xs text-gray-600 font-medium">Target: {alert.targetAreas.join(', ')}</p>
+                            <div key={alert.id} className={`p-4 rounded-lg border-l-4 ${severityClasses.border} ${severityClasses.bg} group`}>
+                                <div className="flex items-start justify-between">
+                                    <div className="flex items-start">
+                                        <AlertTriangle className={`w-6 h-5 mr-3 mt-1 flex-shrink-0 ${severityClasses.text}`} />
+                                        <div>
+                                            <p className={`font-semibold ${severityClasses.text}`}>{alert.title}</p>
+                                            <p className="text-sm text-gray-700 mt-1">{alert.message}</p>
+                                            <div className="flex items-center justify-between mt-2">
+                                                <p className="text-xs text-gray-500">{new Date(alert.timestamp).toLocaleString()}</p>
+                                                <p className="text-xs text-gray-600 font-medium ml-4">Target Areas: {alert.targetAreas.join(', ')}</p>
+                                                {alert.targetRoles && alert.targetRoles.length > 0 && <p className="text-xs text-gray-600 font-medium ml-4">Target Roles: {alert.targetRoles.join(', ')}</p>}
+                                            </div>
                                         </div>
+                                    </div>
+                                    <div className="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => openModalForEdit(alert)} className="p-1.5 bg-white rounded-full text-blue-600 hover:bg-blue-100 shadow-sm"><Edit className="w-4 h-4" /></button>
+                                        <button onClick={() => handleDelete(alert.id)} className="p-1.5 bg-white rounded-full text-red-600 hover:bg-red-100 shadow-sm"><Trash2 className="w-4 h-4" /></button>
                                     </div>
                                 </div>
                             </div>
@@ -98,115 +114,60 @@ const SendAlertsView: React.FC = () => {
                     })}
                 </div>
             </div>
-        );
-    }
 
-    // Form for Central Admin
-    return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Alert Composer */}
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Dispatch New Alert</h2>
-                <form onSubmit={handleSendAlert} className="space-y-6">
-                    {/* Severity */}
+            <Modal isOpen={isModalOpen} onClose={closeModal} title={editingAlert ? 'Edit Alert' : 'Create New Alert'}>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Severity Level</label>
                         <div className="grid grid-cols-2 gap-3">
                             {severityOptions.map(opt => (
-                                <label key={opt.value} className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all ${severity === opt.value ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'}`}>
-                                    <input
-                                        type="radio"
-                                        name="severity"
-                                        value={opt.value}
-                                        checked={severity === opt.value}
-                                        onChange={() => setSeverity(opt.value)}
-                                        className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                    />
+                                <label key={opt.value} className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all ${watch('severity') === opt.value ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'}`}>
+                                    <input {...register('severity')} type="radio" value={opt.value} className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500" />
                                     <div className={`w-3 h-3 rounded-full ml-3 ${opt.color}`}></div>
                                     <span className="ml-2 text-sm font-medium text-gray-800">{opt.label}</span>
                                 </label>
                             ))}
                         </div>
                     </div>
-
-                    {/* Title & Message */}
                     <div>
                         <label htmlFor="title" className="block text-sm font-medium text-gray-700">Alert Title</label>
-                        <input
-                            type="text"
-                            id="title"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="e.g., Critical Flood Warning"
-                        />
+                        <input {...register('title')} id="title" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., Critical Flood Warning" />
                     </div>
                     <div>
                         <label htmlFor="message" className="block text-sm font-medium text-gray-700">Message</label>
-                        <textarea
-                            id="message"
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            rows={4}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Detailed information about the alert..."
-                        />
+                        <textarea {...register('message')} id="message" rows={4} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Detailed information..." />
                     </div>
-
-                    {/* Targeting */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Target Audience</label>
-                        <div className="flex flex-col space-y-4">
-                            <select value={targetScope} onChange={e => { setTargetScope(e.target.value); setSelectedState(''); setSelectedDistrict(''); }} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                <option value="all">All India</option>
-                                <option value="state">Specific State</option>
-                                <option value="district">Specific District</option>
-                            </select>
-                            {targetScope === 'state' && (
-                                <select value={selectedState} onChange={e => setSelectedState(e.target.value)} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">-- Select State --</option>
-                                    {Object.keys(indianStates).map(state => <option key={state} value={state}>{state}</option>)}
-                                </select>
-                            )}
-                            {targetScope === 'district' && (
-                                <div className="flex space-x-2">
-                                    <select value={selectedState} onChange={e => { setSelectedState(e.target.value); setSelectedDistrict(''); }} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                        <option value="">-- Select State --</option>
-                                        {Object.keys(indianStates).map(state => <option key={state} value={state}>{state}</option>)}
-                                    </select>
-                                    <select value={selectedDistrict} onChange={e => setSelectedDistrict(e.target.value)} disabled={!selectedState} className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100">
-                                        <option value="">-- Select District --</option>
-                                        {selectedState && indianStates[selectedState]?.map(district => <option key={district} value={district}>{district}</option>)}
-                                    </select>
-                                </div>
-                            )}
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Target Roles (Optional)</label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {(['SDMA', 'Rescue', 'NGO'] as const).map(role => (
+                                <label key={role} className="flex items-center space-x-2 p-2 border rounded-lg">
+                                    <input type="checkbox" {...register('targetRoles')} value={role} />
+                                    <span>{role}</span>
+                                </label>
+                            ))}
                         </div>
                     </div>
-
-                    {/* Submit Button */}
-                    <button type="submit" className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                        <Send className="w-5 h-5 mr-2" />
-                        Dispatch Alert
-                    </button>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Target State/District</label>
+                        <select {...register('targetAreas')} multiple className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 h-32">
+                            <option value="all">All India</option>
+                            {Object.entries(indianStates).map(([state, districts]) => (
+                                <optgroup label={state} key={state}>
+                                    <option value={state}>{state} (Entire State)</option>
+                                    {districts.map(district => <option key={`${state}-${district}`} value={district}>{district}</option>)}
+                                </optgroup>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex justify-end space-x-3 pt-4">
+                        <button type="button" onClick={closeModal} className="px-4 py-2 bg-gray-200 rounded-lg">Cancel</button>
+                        <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 flex items-center">
+                            <Send className="w-4 h-4 mr-2" /> {editingAlert ? 'Update Alert' : 'Dispatch Alert'}
+                        </button>
+                    </div>
                 </form>
-            </div>
-
-            {/* Live Preview */}
-            <div className="bg-gray-100 rounded-lg p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">Live Preview</h3>
-                <div className="bg-white rounded-lg p-4 shadow-lg">
-                    <div className={`p-4 rounded-lg border-l-4 ${getSeverityClass(severity).border} ${getSeverityClass(severity).bg}`}>
-                        <div className="flex items-start">
-                            <AlertTriangle className={`w-6 h-5 mr-3 mt-1 flex-shrink-0 ${getSeverityClass(severity).text}`} />
-                            <div>
-                                <p className={`font-semibold ${getSeverityClass(severity).text}`}>{title || 'Alert Title...'}</p>
-                                <p className="text-sm text-gray-700 mt-1">{message || 'Alert message will appear here...'}</p>
-                                <p className="text-xs text-gray-500 mt-2">{new Date().toLocaleString()}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </Modal>
         </div>
     );
 };
