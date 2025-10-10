@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import { AlertTriangle, Edit, Trash2 } from 'lucide-react';
 import { FloodZone, SOSRequest } from '../../types';
 import Modal from '../common/Modal';

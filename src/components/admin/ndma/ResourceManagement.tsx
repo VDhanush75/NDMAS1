@@ -7,8 +7,12 @@ import { adminUsers } from '../../../data/mockData';
 
 type ResourceFormData = Omit<Resource, 'id' | 'available'>;
 
-const ResourceManagement: React.FC<{ initialResources: Resource[] }> = ({ initialResources }) => {
-  const [resources, setResources] = useState<Resource[]>(initialResources);
+interface ResourceManagementProps {
+  resources: Resource[];
+  setResources: React.Dispatch<React.SetStateAction<Resource[]>>;
+}
+
+const ResourceManagement: React.FC<ResourceManagementProps> = ({ resources, setResources }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
 

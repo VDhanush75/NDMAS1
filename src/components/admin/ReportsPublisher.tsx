@@ -8,7 +8,7 @@ import { indianStates } from '../../data/locations';
 const NewsCard: React.FC<{ report: NewsReport, onEdit: () => void, onDelete: () => void }> = ({ report, onEdit, onDelete }) => (
   <div className="bg-white rounded-lg overflow-hidden shadow-lg relative group">
     <img 
-      src={report.imageUrl || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400/E5E7EB/9CA3AF/png?text=Image+Preview'} 
+      src={report.imageUrl || 'https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://img-wrapper.vercel.app/image?url=https://placehold.co/600x400/E5E7EB/9CA3AF/png?text=Image+Preview'} 
       alt={report.title} 
       className="w-full h-48 object-cover" 
     />

@@ -5,15 +5,18 @@ import { LogOut, Handshake } from 'lucide-react';
 import NgoAdminDashboard from './NgoAdminDashboard';
 import NgoVolunteerView from './NgoVolunteerView';
 import { Assignment, VolunteerReport, User } from '../../types';
-import { assignments as initialAssignments, volunteerReports as initialVolunteerReports, mockCitizens } from '../../data/mockData';
+import { assignments as initialAssignments, volunteerReports as initialVolunteerReports } from '../../data/mockData';
 
-const NgoDashboard: React.FC = () => {
+interface NgoDashboardProps {
+  citizens: User[];
+  setCitizens: React.Dispatch<React.SetStateAction<User[]>>;
+}
+
+const NgoDashboard: React.FC<NgoDashboardProps> = ({ citizens, setCitizens }) => {
   const { user, logout } = useAuth();
   
-  // State management at the highest level for this module to simulate real-time updates
   const [assignments, setAssignments] = useState<Assignment[]>(initialAssignments);
   const [volunteerReports, setVolunteerReports] = useState<VolunteerReport[]>(initialVolunteerReports);
-  const [citizens, setCitizens] = useState<User[]>(mockCitizens);
 
   const handleAddAssignment = (newAssignment: Omit<Assignment, 'id'>) => {
     const assignmentToAdd: Assignment = {

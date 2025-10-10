@@ -268,7 +268,7 @@ const Login: React.FC<LoginProps> = ({ setGeneralUsers, adminUsers, rescueUsers,
     });
     const qr = qrGenerator(0, 'M');
     qr.addData(qrData);
-qr.make();
+    qr.make();
     const dataUrl = qr.createDataURL(4, 4);
     
     const finalUser = { ...userWithPermissions, qrCodeDataUrl: dataUrl } as User;
@@ -336,12 +336,17 @@ qr.make();
                 <option value="field-officer">Field Officer</option>
                 <option value="resource-manager">Resource Manager</option>
               </select>
-              {roleErrors.rescueLevel && <p className="text-red-500 text-sm mt-1">{roleErrors.rescueLevel.message}</p>}
+              {roleErrors.rescueLevel && <p className="text-red-500 text-sm mt-1">{roleErrors.rescueLevel?.message}</p>}
               <div className="relative"><ShieldAlert className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /><input {...registerRole('serviceId')} className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Service ID" /></div>
-              {roleErrors.serviceId && <p className="text-red-500 text-sm mt-1">{roleErrors.serviceId.message}</p>}
+              {roleErrors.serviceId && <p className="text-red-500 text-sm mt-1">{roleErrors.serviceId?.message}</p>}
               <div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /><input {...registerRole('password')} type="password" className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Password" /></div>
-              {roleErrors.password && <p className="text-red-500 text-sm mt-1">{roleErrors.password.message}</p>}
-              <p className="text-xs text-center text-gray-500">Demo - ID: <kbd className="font-mono">RT001</kbd>, Pass: <kbd className="font-mono">password123</kbd></p>
+              {roleErrors.password && <p className="text-red-500 text-sm mt-1">{roleErrors.password?.message}</p>}
+              <div className="text-xs text-center text-gray-500 space-y-1">
+                  <p>Role: <kbd className="font-mono">Team Leader</kbd>, Pass: <kbd className="font-mono">password123</kbd></p>
+                  <p>Kolkata Team ID: <kbd className="font-mono">RT001</kbd></p>
+                  <p>Kamrup Team ID: <kbd className="font-mono">RT002</kbd></p>
+                  <p>Howrah Team ID: <kbd className="font-mono">RT003</kbd></p>
+              </div>
             </motion.div>
           )}
           </AnimatePresence>
@@ -364,17 +369,21 @@ qr.make();
                 <option value="admin">Coordinator / Admin</option>
                 <option value="volunteer">Relief Volunteer</option>
               </select>
-              {roleErrors.ngoLevel && <p className="text-red-500 text-sm mt-1">{roleErrors.ngoLevel.message}</p>}
+              {roleErrors.ngoLevel && <p className="text-red-500 text-sm mt-1">{roleErrors.ngoLevel?.message}</p>}
                <select {...registerRole('state')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 bg-white">
                 <option value="">Select Your State</option>
                 {Object.keys(indianStates).map(state => <option key={state} value={state}>{state}</option>)}
               </select>
-              {roleErrors.state && <p className="text-red-500 text-sm mt-1">{roleErrors.state.message as string}</p>}
+              {roleErrors.state && <p className="text-red-500 text-sm mt-1">{roleErrors.state?.message as string}</p>}
               <div className="relative"><ShieldAlert className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /><input {...registerRole('ngoId')} className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500" placeholder="NGO ID" /></div>
-              {roleErrors.ngoId && <p className="text-red-500 text-sm mt-1">{roleErrors.ngoId.message}</p>}
+              {roleErrors.ngoId && <p className="text-red-500 text-sm mt-1">{roleErrors.ngoId?.message}</p>}
               <div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /><input {...registerRole('password')} type="password" className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500" placeholder="Password" /></div>
-              {roleErrors.password && <p className="text-red-500 text-sm mt-1">{roleErrors.password.message}</p>}
-              <p className="text-xs text-center text-gray-500">Demo - ID: <kbd className="font-mono">NGO123</kbd>, Pass: <kbd className="font-mono">password123</kbd></p>
+              {roleErrors.password && <p className="text-red-500 text-sm mt-1">{roleErrors.password?.message}</p>}
+              <div className="text-xs text-center text-gray-500 space-y-1">
+                  <p>Pass for all: <kbd className="font-mono">password123</kbd></p>
+                  <p>West Bengal NGO: ID <kbd className="font-mono">NGO123</kbd> (Select WB)</p>
+                  <p>Assam NGO: ID <kbd className="font-mono">NGO456</kbd> (Select Assam)</p>
+              </div>
             </motion.div>
           )}
           </AnimatePresence>
@@ -398,15 +407,18 @@ qr.make();
                 <option value="SDMA">SDMA</option>
                 <option value="DDMA">DDMA</option>
               </select>
-              {roleErrors.adminLevel && <p className="text-red-500 text-sm mt-1">{roleErrors.adminLevel.message}</p>}
+              {roleErrors.adminLevel && <p className="text-red-500 text-sm mt-1">{roleErrors.adminLevel?.message}</p>}
               <div className="relative"><ShieldAlert className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /><input {...registerRole('serviceId')} className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Service ID" /></div>
-              {roleErrors.serviceId && <p className="text-red-500 text-sm mt-1">{roleErrors.serviceId.message}</p>}
+              {roleErrors.serviceId && <p className="text-red-500 text-sm mt-1">{roleErrors.serviceId?.message}</p>}
               <div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /><input {...registerRole('password')} type="password" className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Password" /></div>
-              {roleErrors.password && <p className="text-red-500 text-sm mt-1">{roleErrors.password.message}</p>}
+              {roleErrors.password && <p className="text-red-500 text-sm mt-1">{roleErrors.password?.message}</p>}
               <div className="text-xs text-center text-gray-500 space-y-1">
-                  <p>NDMA: <kbd className="font-mono">NDMA1</kbd> / <kbd className="font-mono">password123</kbd></p>
-                  <p>SDMA: <kbd className="font-mono">SDMA1</kbd> / <kbd className="font-mono">password123</kbd></p>
-                  <p>DDMA: <kbd className="font-mono">DDMA1</kbd> / <kbd className="font-mono">password123</kbd></p>
+                  <p>Pass for all: <kbd className="font-mono">password123</kbd></p>
+                  <p>NDMA: ID <kbd className="font-mono">NDMA1</kbd></p>
+                  <p>SDMA (WB): ID <kbd className="font-mono">SDMA1</kbd></p>
+                  <p>SDMA (Assam): ID <kbd className="font-mono">SDMA2</kbd></p>
+                  <p>DDMA (Kolkata): ID <kbd className="font-mono">DDMA1</kbd></p>
+                  <p>DDMA (Howrah): ID <kbd className="font-mono">DDMA2</kbd></p>
               </div>
             </motion.div>
           )}
@@ -445,9 +457,9 @@ qr.make();
       <p className="text-xs text-center text-gray-500 mb-4">{t('citizen_login_demo')}</p>
       <form onSubmit={handleUserLoginSubmit(onUserLogin)} className="space-y-4">
         <input {...registerUserLogin('username')} placeholder={t('mobile_or_email_placeholder')} className="w-full px-4 py-3 border rounded-lg" />
-        {userLoginErrors.username && <p className="text-red-500 text-sm">{userLoginErrors.username.message}</p>}
+        {userLoginErrors.username && <p className="text-red-500 text-sm">{userLoginErrors.username?.message}</p>}
         <input {...registerUserLogin('password')} type="password" placeholder={t('password_placeholder')} className="w-full px-4 py-3 border rounded-lg" />
-        {userLoginErrors.password && <p className="text-red-500 text-sm">{userLoginErrors.password.message}</p>}
+        {userLoginErrors.password && <p className="text-red-500 text-sm">{userLoginErrors.password?.message}</p>}
         <div className="flex items-center justify-between text-sm">
             <label className="flex items-center text-gray-600">
                 <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
@@ -488,25 +500,25 @@ qr.make();
           </label>
         </div>
         <input {...registerSignup('name')} placeholder={t('full_name_placeholder')} className="w-full px-4 py-3 border rounded-lg" />
-        {signupErrors.name && <p className="text-red-500 text-sm">{signupErrors.name.message}</p>}
+        {signupErrors.name && <p className="text-red-500 text-sm">{signupErrors.name?.message}</p>}
         <input {...registerSignup('email')} placeholder={t('email_placeholder')} className="w-full px-4 py-3 border rounded-lg" />
-        {signupErrors.email && <p className="text-red-500 text-sm">{signupErrors.email.message}</p>}
+        {signupErrors.email && <p className="text-red-500 text-sm">{signupErrors.email?.message}</p>}
         <input {...registerSignup('mobile')} placeholder={t('mobile_number_placeholder')} className="w-full px-4 py-3 border rounded-lg" />
-        {signupErrors.mobile && <p className="text-red-500 text-sm">{signupErrors.mobile.message}</p>}
+        {signupErrors.mobile && <p className="text-red-500 text-sm">{signupErrors.mobile?.message}</p>}
         <input {...registerSignup('password')} type="password" placeholder={t('password_placeholder')} className="w-full px-4 py-3 border rounded-lg" />
-        {signupErrors.password && <p className="text-red-500 text-sm">{signupErrors.password.message}</p>}
+        {signupErrors.password && <p className="text-red-500 text-sm">{signupErrors.password?.message}</p>}
         <select {...registerSignup('state')} className="w-full px-4 py-3 border rounded-lg bg-white">
           <option value="">{t('select_state')}</option>
           {Object.keys(indianStates).map(state => <option key={state} value={state}>{state}</option>)}
         </select>
-        {signupErrors.state && <p className="text-red-500 text-sm">{signupErrors.state.message}</p>}
+        {signupErrors.state && <p className="text-red-500 text-sm">{signupErrors.state?.message}</p>}
         <select {...registerSignup('district')} disabled={!selectedState} className="w-full px-4 py-3 border rounded-lg bg-white disabled:bg-gray-100">
           <option value="">{t('select_district')}</option>
           {selectedState && indianStates[selectedState]?.map(district => <option key={district} value={district}>{district}</option>)}
         </select>
-        {signupErrors.district && <p className="text-red-500 text-sm">{signupErrors.district.message}</p>}
+        {signupErrors.district && <p className="text-red-500 text-sm">{signupErrors.district?.message}</p>}
         <input {...registerSignup('area')} placeholder={t('area_village_placeholder')} className="w-full px-4 py-3 border rounded-lg" />
-        {signupErrors.area && <p className="text-red-500 text-sm">{signupErrors.area.message}</p>}
+        {signupErrors.area && <p className="text-red-500 text-sm">{signupErrors.area?.message}</p>}
         <button type="submit" disabled={isLoading} className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-blue-400 flex items-center justify-center">
             {isLoading ? <LoaderCircle className="animate-spin w-5 h-5 mr-2" /> : null}
             {t('get_otp')}
@@ -527,7 +539,7 @@ qr.make();
                 <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input {...registerOtpSignup('mobile')} placeholder={t('mobile_number_placeholder')} className="w-full pl-10 pr-4 py-3 border rounded-lg" />
             </div>
-            {otpSignupErrors.mobile && <p className="text-red-500 text-sm">{otpSignupErrors.mobile.message}</p>}
+            {otpSignupErrors.mobile && <p className="text-red-500 text-sm">{otpSignupErrors.mobile?.message}</p>}
             <button type="submit" disabled={isLoading} className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-blue-400 flex items-center justify-center">
                 {isLoading ? <LoaderCircle className="animate-spin w-5 h-5 mr-2" /> : null}
                 {t('get_otp')}
@@ -558,7 +570,7 @@ qr.make();
             placeholder="______"
             className="w-full text-center text-3xl tracking-[1em] font-mono bg-gray-100 border-2 border-gray-300 rounded-lg p-4 focus:ring-blue-500 focus:border-blue-500"
           />
-          {otpErrors.otp && <p className="text-red-500 text-sm mt-2">{otpErrors.otp.message}</p>}
+          {otpErrors.otp && <p className="text-red-500 text-sm mt-2">{otpErrors.otp?.message}</p>}
           <button type="submit" disabled={isLoading} className="w-full mt-6 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 disabled:bg-green-400 flex items-center justify-center">
             {isLoading ? <LoaderCircle className="animate-spin w-5 h-5 mr-2" /> : null}
             {t('verify_proceed')}

@@ -92,7 +92,7 @@ const NdmaDashboard: React.FC<NdmaDashboardProps> = (props) => {
                     ))}
                 </div>
             );
-            case 'resources': return <ResourceManagement initialResources={props.resources} />;
+            case 'resources': return <ResourceManagement resources={props.resources} setResources={props.setResources} />;
             case 'alerts': return <SendAlertsView initialAlerts={props.alerts} setAlerts={props.setAlerts} />;
             case 'reports': return <ReportsPublisher initialReports={props.newsReports} setNewsReports={props.setNewsReports} />;
             case 'roles': return <RoleManagement adminUsers={props.adminUsers} setAdminUsers={props.setAdminUsers} rescueUsers={props.rescueUsers} setRescueUsers={props.setRescueUsers} ngoData={props.ngoData} setNgoData={props.setNgoData} />;

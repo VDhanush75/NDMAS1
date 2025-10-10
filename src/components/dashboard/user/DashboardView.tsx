@@ -1,6 +1,6 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
-import { AlertTriangle, Shield, Droplets, Wind, Thermometer } from 'lucide-react';
+import { AlertTriangle, Shield, Droplets, Wind, Thermometer, Phone } from 'lucide-react';
 import { FloodZone, SOSRequest } from '../../../types';
 import { historicalData, regionalRiskData } from '../../../data/mockData';
 import { useTranslation } from 'react-i18next';
