@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
-import { BarChart3, MapPin, Truck, Send, FileText, AlertTriangle, Inbox } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { BarChart3, MapPin, Truck, Send, FileText, Inbox, Menu, X } from 'lucide-react';
 import { FloodZone, Resource, Alert, Task, ResourceRequest, User, NgoData, SdmReport, SOSRequest } from '../../../types';
 import FloodMap from '../../map/FloodMap';
 import SdmOverview from './SdmOverview';
 import SdmResources from './SdmResources';
 import SdmReportPublisher from './SdmReportPublisher';
 import { useAuth } from '../../../context/AuthContext';
-import { formatDistanceToNow } from 'date-fns';
+import AdminSidebar from '../AdminSidebar';
 
 interface SdmaDashboardProps {
     activeTab: string;
     setActiveTab: React.Dispatch<React.SetStateAction<string>>;
+    isSidebarCollapsed: boolean;
+    setIsSidebarCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
     floodZones: FloodZone[]; setFloodZones: React.Dispatch<React.SetStateAction<FloodZone[]>>;
     sosRequests: SOSRequest[]; setSosRequests: React.Dispatch<React.SetStateAction<SOSRequest[]>>;
     resources: Resource[];
@@ -21,14 +24,14 @@ interface SdmaDashboardProps {
     adminUsers: User[];
     rescueUsers: User[];
     ngoData: NgoData[];
-    generalUsers: User[]; // Added for overview stats
+    generalUsers: User[];
 }
 
 const SdmaDashboard: React.FC<SdmaDashboardProps> = (props) => {
     const { user } = useAuth();
-    const { activeTab, setActiveTab, floodZones, setFloodZones, alerts, sdmReports, setSdmReports } = props;
+    const { activeTab, setActiveTab, floodZones, setFloodZones, alerts, sdmReports, setSdmReports, isSidebarCollapsed, setIsSidebarCollapsed } = props;
+    const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-    // Filter data for the current SDMA's state
     const stateFloodZones = floodZones.filter(z => z.state === user?.state);
     const stateAlerts = alerts.filter(a => a.targetAreas.includes('all') || a.targetAreas.includes(user?.state || ''));
 
@@ -63,7 +66,7 @@ const SdmaDashboard: React.FC<SdmaDashboardProps> = (props) => {
     const renderContent = () => {
         switch (activeTab) {
             case 'overview': return <SdmOverview {...props} />;
-            case 'operations': return <div className="h-[80vh]"><FloodMap zones={stateFloodZones} sosRequests={props.sosRequests.filter(s => s.state === user?.state)} showSOS={true} canEdit={true} onAddZone={handleAddZone} onUpdateZone={handleUpdateZone} onDeleteZone={handleDeleteZone} jurisdiction="district" /></div>;
+            case 'operations': return <div className="h-[85vh]"><FloodMap zones={stateFloodZones} sosRequests={props.sosRequests.filter(s => s.state === user?.state)} showSOS={true} canEdit={true} onAddZone={handleAddZone} onUpdateZone={handleUpdateZone} onDeleteZone={handleDeleteZone} jurisdiction="district" onExit={() => setActiveTab('overview')} /></div>;
             case 'resources': return <SdmResources {...props} />;
             case 'alerts': return (
                 <div className="space-y-4">
@@ -71,7 +74,7 @@ const SdmaDashboard: React.FC<SdmaDashboardProps> = (props) => {
                     {stateAlerts.length > 0 ? stateAlerts.map(alert => (
                         <div key={alert.id} className={`p-4 rounded-lg border-l-4 ${getSeverityClass(alert.severity as any).border} ${getSeverityClass(alert.severity as any).bg}`}>
                             <div className="flex items-start">
-                                <AlertTriangle className={`w-6 h-5 mr-3 mt-1 flex-shrink-0 ${getSeverityClass(alert.severity as any).text}`} />
+                                <Send className={`w-6 h-5 mr-3 mt-1 flex-shrink-0 ${getSeverityClass(alert.severity as any).text}`} />
                                 <div>
                                     <p className={`font-semibold ${getSeverityClass(alert.severity as any).text}`}>{alert.title}</p>
                                     <p className="text-sm text-gray-700 mt-1">{alert.message}</p>
@@ -90,7 +93,6 @@ const SdmaDashboard: React.FC<SdmaDashboardProps> = (props) => {
                         <p className="text-gray-600">Live feed of reports from your state.</p>
                     </div>
                     <div className="bg-white p-6 rounded-2xl shadow-lg">
-                        {/* This would be populated by reports from DDMAs, Rescue Teams, NGOs */}
                         <p className="text-gray-500">No new updates at this time.</p>
                     </div>
                 </div>
@@ -98,30 +100,69 @@ const SdmaDashboard: React.FC<SdmaDashboardProps> = (props) => {
             default: return <SdmOverview {...props} />;
         }
     };
+    
+    const SidebarComponent = () => (
+        <AdminSidebar 
+            isCollapsed={isSidebarCollapsed}
+            setIsCollapsed={setIsSidebarCollapsed}
+            sidebarItems={sidebarItems}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+        />
+    );
 
     return (
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex flex-col lg:flex-row gap-8">
-                <div className="lg:w-64">
-                    <nav className="bg-white rounded-lg shadow-sm p-4 sticky top-24">
-                        <div className="space-y-2">
-                            {sidebarItems.map((item) => (
-                                <button
-                                    key={item.id}
-                                    onClick={() => setActiveTab(item.id)}
-                                    className={`w-full flex items-center px-3 py-2 text-left rounded-lg transition-colors ${activeTab === item.id ? 'bg-red-100 text-red-700' : 'text-gray-600 hover:bg-gray-100'}`}
-                                >
-                                    <item.icon className="w-5 h-5 mr-3" />
-                                    {item.label}
-                                </button>
-                            ))}
-                        </div>
-                    </nav>
-                </div>
-                <div className="flex-1">
+        <div className="flex h-screen">
+            <div className="hidden lg:flex flex-shrink-0">
+                <SidebarComponent />
+            </div>
+            
+            <AnimatePresence>
+                {isMobileSidebarOpen && (
+                     <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+                            onClick={() => setMobileSidebarOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ x: '-100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '-100%' }}
+                            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                            className="fixed top-0 left-0 h-full w-64 bg-white z-50 lg:hidden"
+                        >
+                            <AdminSidebar 
+                                isCollapsed={false}
+                                setIsCollapsed={() => {}}
+                                sidebarItems={sidebarItems}
+                                activeTab={activeTab}
+                                setActiveTab={(tab) => {
+                                    setActiveTab(tab);
+                                    setMobileSidebarOpen(false);
+                                }}
+                            />
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            <main className="flex-1 flex flex-col">
+                <header className="flex-shrink-0 bg-white shadow-sm h-16 flex items-center justify-between px-4 lg:px-8">
+                    <div className="flex items-center">
+                        <button onClick={() => setMobileSidebarOpen(true)} className="lg:hidden mr-3 p-2 text-gray-600">
+                            <Menu className="w-6 h-6" />
+                        </button>
+                        <h1 className="text-lg md:text-xl font-bold text-gray-800">SDMA Dashboard</h1>
+                    </div>
+                </header>
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
                     {renderContent()}
                 </div>
-            </div>
+            </main>
         </div>
     );
 };

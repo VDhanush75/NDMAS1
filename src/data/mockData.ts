@@ -1,4 +1,4 @@
-import { FloodZone, SOSRequest, Resource, Alert, NewsReport, NgoVolunteer, ReliefGood, Assignment, VolunteerReport, User, NgoData, Task, ResourceRequest, SdmReport } from '../types';
+import { FloodZone, SOSRequest, Resource, Alert, NewsReport, NgoVolunteer, ReliefGood, Assignment, VolunteerReport, User, NgoData, Task, ResourceRequest, SdmReport, SafeShelter } from '../types';
 
 export const historicalData = [
   { year: 2015, rainfall: 1200, riverLevel: 5.2, affectedPopulation: 1.2 },
@@ -27,13 +27,16 @@ export const yearlyImpactData = [
 ];
 
 export const stateWiseImpactData = [
-  { state: 'Assam', critical: 28, high: 45, moderate: 60 },
-  { state: 'Bihar', critical: 35, high: 42, moderate: 55 },
-  { state: 'West Bengal', critical: 42, high: 38, moderate: 50 },
-  { state: 'Kerala', critical: 25, high: 30, moderate: 40 },
-  { state: 'Uttar Pradesh', critical: 18, high: 25, moderate: 35 },
-  { state: 'Gujarat', critical: 15, high: 20, moderate: 30 },
-  { state: 'Maharashtra', critical: 12, high: 18, moderate: 28 },
+    { year: 2015, Assam: 2.1, Bihar: 3.5, 'West Bengal': 4.2, Kerala: 1.8 },
+    { year: 2016, Assam: 2.5, Bihar: 3.8, 'West Bengal': 4.5, Kerala: 2.1 },
+    { year: 2017, Assam: 3.2, Bihar: 4.1, 'West Bengal': 5.0, Kerala: 2.5 },
+    { year: 2018, Assam: 5.8, Bihar: 6.2, 'West Bengal': 7.1, Kerala: 4.9 },
+    { year: 2019, Assam: 3.5, Bihar: 4.5, 'West Bengal': 5.5, Kerala: 2.8 },
+    { year: 2020, Assam: 4.8, Bihar: 5.9, 'West Bengal': 6.8, Kerala: 4.2 },
+    { year: 2021, Assam: 5.1, Bihar: 6.0, 'West Bengal': 7.0, Kerala: 4.5 },
+    { year: 2022, Assam: 2.9, Bihar: 4.0, 'West Bengal': 4.8, Kerala: 2.2 },
+    { year: 2023, Assam: 7.2, Bihar: 8.5, 'West Bengal': 9.1, Kerala: 6.5 },
+    { year: 2024, Assam: 4.5, Bihar: 5.5, 'West Bengal': 6.2, Kerala: 3.9 },
 ];
 
 export const regionalRiskData = [
@@ -332,7 +335,8 @@ export const rescueUsers: User[] = [
     { id: 'rescue-team-1', serviceId: 'RT001', password: 'password123', name: 'Alpha Rescue Team', email: 'alpha@rescue.gov.in', role: 'rescue', rescueLevel: 'team-leader', state: 'West Bengal', district: 'Kolkata', mobile: '555', language: 'english', permissions: { location: true, sms: true, notifications: true } },
     { id: 'rescue-team-2', serviceId: 'RT002', password: 'password123', name: 'Bravo Rescue Team', email: 'bravo@rescue.gov.in', role: 'rescue', rescueLevel: 'team-leader', state: 'Assam', district: 'Kamrup Metropolitan', mobile: '666', language: 'english', permissions: { location: true, sms: true, notifications: true } },
     { id: 'rescue-team-3', serviceId: 'RT003', password: 'password123', name: 'Charlie Rescue Team', email: 'charlie@rescue.gov.in', role: 'rescue', rescueLevel: 'team-leader', state: 'West Bengal', district: 'Howrah', mobile: '777', language: 'english', permissions: { location: true, sms: true, notifications: true } },
-
+    { id: 'rescue-fo-1', serviceId: 'RT-FO-001', password: 'password123', name: 'Field Officer Mike', email: 'mike@rescue.gov.in', role: 'rescue', rescueLevel: 'field-officer', state: 'West Bengal', district: 'Kolkata', mobile: '888', language: 'english', permissions: { location: true, sms: true, notifications: true } },
+    { id: 'rescue-rm-1', serviceId: 'RT-RM-001', password: 'password123', name: 'Resource Manager Sara', email: 'sara@rescue.gov.in', role: 'rescue', rescueLevel: 'resource-manager', state: 'West Bengal', district: 'Kolkata', mobile: '999', language: 'english', permissions: { location: true, sms: true, notifications: true } },
 ];
 
 export const ngoData: NgoData[] = [
@@ -422,4 +426,10 @@ export const sdmReports: SdmReport[] = [
         submittedByName: 'Assam SDMA',
         timestamp: new Date(Date.now() - 2 * 3600 * 1000)
     }
+];
+
+export const safeShelters: SafeShelter[] = [
+    { id: 'SH001', name: 'National College', district: 'Kolkata', state: 'West Bengal', capacity: 500, location: [22.5730, 88.3642] },
+    { id: 'SH002', name: 'Howrah Indoor Stadium', district: 'Howrah', state: 'West Bengal', capacity: 1000, location: [22.5950, 88.2640] },
+    { id: 'SH003', name: 'Guwahati University Campus', district: 'Kamrup Metropolitan', state: 'Assam', capacity: 2000, location: [26.1510, 91.7000] },
 ];

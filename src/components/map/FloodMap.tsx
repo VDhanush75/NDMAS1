@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, useMap, useMapEvents } from 'react-leaflet';
-import { AlertTriangle, Edit, Trash2 } from 'lucide-react';
+import { AlertTriangle, Edit, Trash2, ArrowLeft } from 'lucide-react';
 import { FloodZone, SOSRequest } from '../../types';
 import Modal from '../common/Modal';
 import { useForm } from 'react-hook-form';
@@ -16,6 +16,7 @@ interface FloodMapProps {
   onDeleteZone?: (zoneId: string) => void;
   jurisdiction?: 'state' | 'district' | 'local';
   mapRef?: React.RefObject<any>; // For external control
+  onExit?: () => void;
 }
 
 const MapEventsHandler: React.FC<{ onClick: (latlng: { lat: number, lng: number }) => void }> = ({ onClick }) => {
@@ -48,7 +49,8 @@ const FloodMap: React.FC<FloodMapProps> = ({
   onUpdateZone,
   onDeleteZone,
   jurisdiction = 'state',
-  mapRef
+  mapRef,
+  onExit
 }) => {
   const indiaCenter: [number, number] = [22.5937, 82.9629];
   const [isModalOpen, setModalOpen] = useState(false);
@@ -128,6 +130,11 @@ const FloodMap: React.FC<FloodMapProps> = ({
 
   return (
     <div className="relative h-full w-full rounded-lg overflow-hidden">
+        {onExit && (
+            <button onClick={onExit} className="absolute top-4 right-4 z-[1000] bg-white p-3 rounded-full shadow-lg text-gray-700 hover:bg-gray-100 transition-colors">
+                <ArrowLeft className="w-6 h-6" />
+            </button>
+        )}
       <MapContainer center={indiaCenter} zoom={5} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }} whenCreated={mapInstance => { if (mapRef) mapRef.current = mapInstance; }}>
         <MapResizer />
         <MapEventsHandler onClick={handleMapClick} />

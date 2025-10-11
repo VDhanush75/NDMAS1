@@ -342,10 +342,12 @@ const Login: React.FC<LoginProps> = ({ setGeneralUsers, adminUsers, rescueUsers,
               <div className="relative"><KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" /><input {...registerRole('password')} type="password" className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500" placeholder="Password" /></div>
               {roleErrors.password && <p className="text-red-500 text-sm mt-1">{roleErrors.password?.message}</p>}
               <div className="text-xs text-center text-gray-500 space-y-1">
-                  <p>Role: <kbd className="font-mono">Team Leader</kbd>, Pass: <kbd className="font-mono">password123</kbd></p>
-                  <p>Kolkata Team ID: <kbd className="font-mono">RT001</kbd></p>
-                  <p>Kamrup Team ID: <kbd className="font-mono">RT002</kbd></p>
-                  <p>Howrah Team ID: <kbd className="font-mono">RT003</kbd></p>
+                  <p>Pass for all: <kbd className="font-mono">password123</kbd></p>
+                  <p>Team Leader (Kolkata): ID <kbd className="font-mono">RT001</kbd></p>
+                  <p>Team Leader (Kamrup): ID <kbd className="font-mono">RT002</kbd></p>
+                  <p>Team Leader (Howrah): ID <kbd className="font-mono">RT003</kbd></p>
+                  <p>Field Officer (Kolkata): ID <kbd className="font-mono">RT-FO-001</kbd></p>
+                  <p>Resource Manager (Kolkata): ID <kbd className="font-mono">RT-RM-001</kbd></p>
               </div>
             </motion.div>
           )}

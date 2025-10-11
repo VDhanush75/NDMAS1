@@ -1,19 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  AlertTriangle, Phone, MapPin, Camera, Mic, Bell, LogOut, Users,
+  AlertTriangle, Phone, Camera, Mic, Bell, LogOut,
   LayoutDashboard, Newspaper, Settings, Map,
-  User as UserIcon, Languages, Save, Download, Menu, X, Volume2, ShieldCheck
+  User as UserIcon, Languages, Save, Download, Menu, X, Volume2, ShieldCheck, Home, ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import FloodMap from '../map/FloodMap';
-import { User, FloodZone, SOSRequest, Alert, NewsReport } from '../../types';
+import { User, FloodZone, SOSRequest, Alert, NewsReport, SafeShelter } from '../../types';
 import { useTranslation } from 'react-i18next';
 import { openDB } from 'idb';
 import Modal from '../common/Modal';
 import WeatherWidget from './WeatherWidget';
 import DashboardView from './user/DashboardView';
 import qrGenerator from 'qrcode-generator';
+import SOSStatusTracker from './SOSStatusTracker';
+import { safeShelters as allSafeShelters } from '../../data/mockData';
 
 const dbPromise = openDB('sos-db', 1, {
   upgrade(db) {
@@ -46,24 +48,19 @@ const syncSOSRequests = async () => {
   alert(`${allReqs.length} offline SOS request(s) have been sent.`);
 };
 
-// Listen for online event to trigger sync
 window.addEventListener('online', syncSOSRequests);
 
 
-const MapView: React.FC<{ zones: FloodZone[], sos: SOSRequest[], isSidebarOpen: boolean }> = ({ zones, sos, isSidebarOpen }) => {
+const MapView: React.FC<{ zones: FloodZone[], sos: SOSRequest[], onExit: () => void }> = ({ zones, sos, onExit }) => {
     const mapRef = useRef<any>(null);
 
     useEffect(() => {
-        // This timeout ensures the map container is visible and has its final dimensions
-        // before we tell Leaflet to recalculate its size.
         const timer = setTimeout(() => {
-            if (mapRef.current) {
-                mapRef.current.invalidateSize();
-            }
-        }, 350); // A bit longer than the sidebar animation
+            mapRef.current?.invalidateSize();
+        }, 100);
 
         return () => clearTimeout(timer);
-    }, [isSidebarOpen]);
+    }, []);
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-lg shadow-md h-full w-full">
@@ -72,6 +69,7 @@ const MapView: React.FC<{ zones: FloodZone[], sos: SOSRequest[], isSidebarOpen: 
                 sosRequests={sos} 
                 showSOS={true} 
                 mapRef={mapRef}
+                onExit={onExit}
             />
         </motion.div>
     );
@@ -98,14 +96,22 @@ const getSeverityClass = (severity: string) => {
     }
 };
 
-const AlertsView: React.FC<{ alerts: Alert[] }> = ({ alerts }) => {
+const AlertsView: React.FC<{ alerts: Alert[], safeShelters: SafeShelter[], user: User | null }> = ({ alerts, safeShelters, user }) => {
     const { t, i18n } = useTranslation();
+    
+    const getNearbyShelters = (targetAreas: string[]) => {
+        return safeShelters.filter(shelter => 
+            targetAreas.includes(shelter.state) || targetAreas.includes(shelter.district) || (user && (shelter.state === user.state || shelter.district === user.district))
+        );
+    };
+
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-2xl shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">{t('alerts_notifications')}</h2>
             <div className="space-y-4">
                 {alerts.map((alert) => {
                     const severityClasses = getSeverityClass(alert.severity);
+                    const nearbyShelters = getNearbyShelters(alert.targetAreas);
                     return (
                         <div key={alert.id} className={`p-4 rounded-lg border-l-4 ${severityClasses.border} ${severityClasses.bg}`}>
                             <div className="flex items-start justify-between">
@@ -121,6 +127,19 @@ const AlertsView: React.FC<{ alerts: Alert[] }> = ({ alerts }) => {
                                     <Volume2 className="w-5 h-5" />
                                 </button>
                             </div>
+                            {nearbyShelters.length > 0 && (
+                                <div className="mt-4 pt-3 border-t border-gray-300/50">
+                                    <h4 className="text-sm font-semibold text-gray-800 mb-2">{t('nearby_shelters')}</h4>
+                                    <div className="space-y-2">
+                                        {nearbyShelters.map(shelter => (
+                                            <div key={shelter.id} className="flex items-center text-sm text-gray-700">
+                                                <Home className="w-4 h-4 mr-2 text-green-600"/>
+                                                <span>{shelter.name}, {shelter.district} (Capacity: {shelter.capacity})</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     );
                 })}
@@ -159,16 +178,32 @@ const NewsView: React.FC<{ newsReports: NewsReport[] }> = ({ newsReports }) => {
 const SettingsView: React.FC<{ user: User | null }> = ({ user }) => {
     const { t, i18n } = useTranslation();
     const { logout } = useAuth();
+    const [qrUrl, setQrUrl] = useState(user?.qrCodeDataUrl);
     
+    useEffect(() => {
+        if (!user?.qrCodeDataUrl && user) {
+            const qrData = JSON.stringify({
+                id: user.id, name: user.name, mobile: user.mobile,
+                location: `${user.area}, ${user.district}, ${user.state}`,
+                aidStatus: user.aidStatus,
+            });
+            const qr = qrGenerator(0, 'M');
+            qr.addData(qrData);
+            qr.make();
+            const dataUrl = qr.createDataURL(4, 4);
+            setQrUrl(dataUrl);
+        }
+    }, [user]);
+
     const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         i18n.changeLanguage(e.target.value);
     };
 
     const handleDownloadQR = () => {
-        if (!user?.qrCodeDataUrl) return;
+        if (!qrUrl) return;
         const link = document.createElement('a');
-        link.href = user.qrCodeDataUrl;
-        link.download = `FloodRelief_QR_${user.id}.png`;
+        link.href = qrUrl;
+        link.download = `FloodRelief_QR_${user?.id}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -184,10 +219,10 @@ const SettingsView: React.FC<{ user: User | null }> = ({ user }) => {
                     <p className="text-sm text-gray-500">{user?.mobile}</p>
                     <p className="text-sm text-gray-500">{`${user?.area}, ${user?.district}, ${user?.state}`}</p>
                     
-                    {user?.qrCodeDataUrl && (
+                    {qrUrl && (
                         <div className="mt-6 w-full">
                             <p className="font-semibold text-gray-700 mb-2">{t('relief_id_card')}</p>
-                            <img src={user.qrCodeDataUrl} alt="Your Relief QR Code" className="w-40 h-40 mx-auto border-4 border-white shadow-md" />
+                            <img src={qrUrl} alt="Your Relief QR Code" className="w-40 h-40 mx-auto border-4 border-white shadow-md" />
                             <p className="text-xs text-gray-500 mt-2">{t('show_qr')}</p>
                             <button onClick={handleDownloadQR} className="mt-3 w-full bg-gray-700 text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-800 flex items-center justify-center">
                                 <Download className="w-4 h-4 mr-2" /> {t('download_qr')}
@@ -257,10 +292,11 @@ interface UserDashboardProps {
   sosRequests: SOSRequest[];
   alerts: Alert[];
   newsReports: NewsReport[];
+  safeShelters: SafeShelter[];
   setSosRequests: React.Dispatch<React.SetStateAction<SOSRequest[]>>;
 }
 
-const UserDashboard: React.FC<UserDashboardProps> = ({ floodZones, sosRequests, alerts, newsReports, setSosRequests }) => {
+const UserDashboard: React.FC<UserDashboardProps> = ({ floodZones, sosRequests, alerts, newsReports, safeShelters, setSosRequests }) => {
     const { user, logout } = useAuth();
     const { t } = useTranslation();
     const [sosModalOpen, setSOSModalOpen] = useState(false);
@@ -269,8 +305,12 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ floodZones, sosRequests, 
     const [sosMessage, setSosMessage] = useState('');
     const [sosMedia, setSosMedia] = useState<File | null>(null);
     const [isRecording, setIsRecording] = useState(false);
+    const [sosModalError, setSosModalError] = useState<string | null>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
+    const [isTrackerVisible, setTrackerVisible] = useState(true);
+
+    const activeSOS = user ? sosRequests.find(req => req.userId === user.id && req.status !== 'completed') : undefined;
 
     const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -279,6 +319,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ floodZones, sosRequests, 
     };
 
     const handleAudioRecord = async () => {
+        setSosModalError(null);
         if (isRecording) {
             mediaRecorderRef.current?.stop();
             setIsRecording(false);
@@ -294,13 +335,18 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ floodZones, sosRequests, 
                     const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
                     const audioFile = new File([audioBlob], `audio_${Date.now()}.webm`, { type: 'audio/webm' });
                     setSosMedia(audioFile);
-                    stream.getTracks().forEach(track => track.stop()); // Stop the mic
+                    stream.getTracks().forEach(track => track.stop());
                 };
                 mediaRecorderRef.current.start();
                 setIsRecording(true);
-            } catch (err) {
-                console.error("Error accessing microphone:", err);
-                alert("Could not access microphone. Please check permissions.");
+            } catch (err: any) {
+                if (err.name === 'NotFoundError') {
+                    setSosModalError("No microphone found. This feature may not be supported in your current environment.");
+                } else if (err.name === 'NotAllowedError') {
+                    setSosModalError("Microphone access was denied. Please check your browser permissions and try again.");
+                } else {
+                    setSosModalError("Could not access the microphone. Please ensure it is connected and permissions are granted.");
+                }
             }
         }
     };
@@ -310,7 +356,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ floodZones, sosRequests, 
             id: `sos_${Date.now()}`,
             userId: user?.id,
             userName: user?.name,
-            location: [22.5, 88.4], // Placeholder, should use geolocation
+            location: [22.5, 88.4],
             timestamp: new Date(),
             status: 'pending',
             severity: 'critical',
@@ -328,19 +374,27 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ floodZones, sosRequests, 
                 alert('You are offline. SOS request saved and will be sent automatically when you are back online.');
             } catch (error) {
                 console.error('Background sync registration failed:', error);
-                 // Even if sync registration fails, we can still update the local state.
                 setSosRequests(prev => [sosData as SOSRequest, ...prev]);
                 alert('SOS request saved locally. It will be sent when you are online.');
             }
         } else {
-            // Simulate API call
             console.log("Sending SOS request:", sosData);
             setSosRequests(prev => [sosData as SOSRequest, ...prev]);
             alert('SOS request sent successfully! Emergency services have been notified.');
         }
+        setTrackerVisible(true);
+        closeSosModal();
+    };
+
+    const closeSosModal = () => {
         setSOSModalOpen(false);
+        setSosModalError(null);
         setSosMessage('');
         setSosMedia(null);
+        if (isRecording) {
+            mediaRecorderRef.current?.stop();
+            setIsRecording(false);
+        }
     };
 
     const sidebarItems = [
@@ -398,14 +452,24 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ floodZones, sosRequests, 
         </div>
     );
 
+    const renderContent = () => {
+        if (activeSOS && isTrackerVisible) return <SOSStatusTracker sosRequest={activeSOS} onExit={() => setTrackerVisible(false)} />;
+        switch (activeView) {
+            case 'dashboard': return <DashboardView floodZones={floodZones} sosRequests={sosRequests} />;
+            case 'map': return <div className="flex-1 min-h-0"><MapView zones={floodZones} sos={sosRequests} onExit={() => setActiveView('dashboard')} /></div>;
+            case 'alerts': return <AlertsView alerts={alerts} safeShelters={safeShelters} user={user} />;
+            case 'news': return <NewsView newsReports={newsReports} />;
+            case 'settings': return <SettingsView user={user} />;
+            default: return <DashboardView floodZones={floodZones} sosRequests={sosRequests} />;
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-gray-100 flex">
-            {/* Desktop Sidebar */}
+        <div className="h-screen w-screen bg-gray-100 flex">
             <aside className="w-72 bg-white shadow-lg flex-shrink-0 flex-col hidden lg:flex">
                 <SidebarContent />
             </aside>
 
-            {/* Mobile Sidebar */}
             <AnimatePresence>
                 {isSidebarOpen && (
                     <>
@@ -426,7 +490,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ floodZones, sosRequests, 
                         >
                              <button
                                 onClick={() => setSidebarOpen(false)}
-                                className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+                                className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 z-10"
                                 aria-label="Close menu"
                             >
                                 <X className="w-6 h-6" />
@@ -444,7 +508,7 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ floodZones, sosRequests, 
                             <button onClick={() => setSidebarOpen(true)} className="lg:hidden mr-4 p-2 rounded-md text-gray-500 hover:bg-gray-100">
                                 <Menu className="w-6 h-6" />
                             </button>
-                            <h1 className="text-xl md:text-2xl font-bold text-gray-900">{viewTitles[activeView]}</h1>
+                            <h1 className="text-xl md:text-2xl font-bold text-gray-900">{activeSOS && isTrackerVisible ? 'Active SOS Status' : viewTitles[activeView]}</h1>
                         </div>
                         <div className="flex items-center space-x-2 sm:space-x-5">
                             <button
@@ -469,16 +533,12 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ floodZones, sosRequests, 
                     </div>
                 </header>
 
-                <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-                    {activeView === 'dashboard' && <DashboardView floodZones={floodZones} sosRequests={sosRequests} />}
-                    {activeView === 'map' && <div className="h-[calc(100vh-10rem)]"><MapView zones={floodZones} sos={sosRequests} isSidebarOpen={isSidebarOpen} /></div>}
-                    {activeView === 'alerts' && <AlertsView alerts={alerts} />}
-                    {activeView === 'news' && <NewsView newsReports={newsReports} />}
-                    {activeView === 'settings' && <SettingsView user={user} />}
+                <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto flex flex-col">
+                    {renderContent()}
                 </main>
             </div>
 
-            <Modal isOpen={sosModalOpen} onClose={() => setSOSModalOpen(false)} title="Send Emergency SOS">
+            <Modal isOpen={sosModalOpen} onClose={closeSosModal} title="Send Emergency SOS">
                 <div className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Emergency Type</label>
@@ -500,6 +560,12 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ floodZones, sosRequests, 
                             placeholder="Describe your emergency situation...">
                         </textarea>
                     </div>
+                    {sosModalError && (
+                        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
+                            <p className="font-bold">Audio Recording Error</p>
+                            <p>{sosModalError}</p>
+                        </div>
+                    )}
                     <div className="flex space-x-4">
                         <label className="flex-1 cursor-pointer bg-blue-50 text-blue-700 py-2 rounded-lg font-medium hover:bg-blue-100 transition-colors flex items-center justify-center">
                             <Camera className="w-4 h-4 mr-2" />
@@ -510,13 +576,26 @@ const UserDashboard: React.FC<UserDashboardProps> = ({ floodZones, sosRequests, 
                             onClick={handleAudioRecord}
                             className={`flex-1 text-white py-2 rounded-lg font-medium transition-colors flex items-center justify-center ${isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-green-600 hover:bg-green-700'}`}
                         >
-                            <Mic className="w-4 h-4 mr-2" />
-                            {isRecording ? 'Stop Recording' : (sosMedia && sosMedia.type.startsWith('audio/')) ? 'Audio Recorded' : 'Record Audio'}
+                            {isRecording ? (
+                                <>
+                                    <motion.span
+                                        animate={{ opacity: [1, 0.5, 1] }}
+                                        transition={{ duration: 1, repeat: Infinity }}
+                                        className="w-3 h-3 bg-white rounded-full mr-2"
+                                    />
+                                    <span>Recording...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Mic className="w-4 h-4 mr-2" />
+                                    <span>{(sosMedia && sosMedia.type.startsWith('audio/')) ? 'Audio Recorded' : 'Record Audio'}</span>
+                                </>
+                            )}
                         </button>
                     </div>
                     {sosMedia && <p className="text-sm text-gray-600 text-center">Attached: {sosMedia.name}</p>}
                     <div className="flex space-x-4 pt-4">
-                        <button onClick={() => setSOSModalOpen(false)} className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-400 transition-colors">Cancel</button>
+                        <button onClick={closeSosModal} className="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-400 transition-colors">Cancel</button>
                         <button onClick={submitSOS} className="flex-1 bg-red-600 text-white py-3 rounded-lg font-medium hover:bg-red-700 transition-colors">Send SOS</button>
                     </div>
                 </div>

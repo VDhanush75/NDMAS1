@@ -87,7 +87,7 @@ const DdmOverview: React.FC<DdmOverviewProps> = ({ tasks, setTasks, rescueUsers,
 
     return (
         <div className="space-y-8">
-             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
                 <StatCard icon={<Users className="w-7 h-7 text-blue-600" />} title="Registered Users" value={registeredCitizens || 0} color="bg-blue-100" />
                 <StatCard icon={<AlertTriangle className="w-7 h-7 text-red-600" />} title="Active SOS Calls" value={activeSOS || 0} color="bg-red-100" />
                 <StatCard icon={<ShieldCheck className="w-7 h-7 text-green-600" />} title="Local Rescue Teams" value={localRescueTeams.length} color="bg-green-100" />

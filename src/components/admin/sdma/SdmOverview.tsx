@@ -104,7 +104,7 @@ const SdmOverview: React.FC<SdmOverviewProps> = ({ tasks, setTasks, adminUsers, 
 
     return (
         <div className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <StatCard icon={<UserCog className="w-7 h-7 text-blue-600" />} title="Monitored DDMA's" value={monitoredDDMAs.length} color="bg-blue-100" />
                 <StatCard icon={<ShieldCheck className="w-7 h-7 text-green-600" />} title="Deployed Rescue Teams" value={deployedRescueTeams.length} color="bg-green-100" />
                 <StatCard icon={<Handshake className="w-7 h-7 text-yellow-600" />} title="Partner NGOs" value={partnerNGOs.length} color="bg-yellow-100" />

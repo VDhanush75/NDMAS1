@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, LogOut } from 'lucide-react';
+import { Shield, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { FloodZone, SOSRequest, Resource, Alert, NewsReport, User, NgoData, Task, ResourceRequest, SdmReport } from '../../types';
 import NdmaDashboard from '../admin/ndma/NdmaDashboard';
@@ -36,9 +36,10 @@ interface AdminDashboardProps {
 const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const renderDashboardByRole = () => {
-    const dashboardProps = { ...props, activeTab, setActiveTab };
+    const dashboardProps = { ...props, activeTab, setActiveTab, isSidebarCollapsed, setIsSidebarCollapsed };
     switch (user?.adminLevel) {
       case 'NDMA':
         return <NdmaDashboard {...dashboardProps} />;
@@ -53,24 +54,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="bg-red-100 p-2 rounded-lg mr-3"><Shield className="w-6 h-6 text-red-600" /></div>
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">Admin Control Center</h1>
-                <p className="text-sm text-gray-500">{user?.name}</p>
-              </div>
-            </div>
-            <button onClick={logout} className="flex items-center px-3 py-2 text-sm text-red-600 hover:text-red-700"><LogOut className="w-4 h-4 mr-1" />Logout</button>
-          </div>
-        </div>
-      </header>
-      
       <motion.div 
-        initial={{ opacity: 0, y: 20 }} 
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
         {renderDashboardByRole()}

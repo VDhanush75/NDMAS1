@@ -1,14 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { BarChart3, MapPin, Truck, Send, AlertTriangle, Users, Handshake, ShieldCheck, FileText } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { BarChart3, MapPin, Truck, Send, AlertTriangle, Menu, X } from 'lucide-react';
 import { FloodZone, Resource, Alert, Task, ResourceRequest, User, NgoData, SOSRequest } from '../../../types';
 import FloodMap from '../../map/FloodMap';
 import DdmOverview from './DdmOverview';
 import DdmResources from './DdmResources';
 import { useAuth } from '../../../context/AuthContext';
+import AdminSidebar from '../AdminSidebar';
 
 interface DdmaDashboardProps {
     activeTab: string;
     setActiveTab: React.Dispatch<React.SetStateAction<string>>;
+    isSidebarCollapsed: boolean;
+    setIsSidebarCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
     floodZones: FloodZone[]; setFloodZones: React.Dispatch<React.SetStateAction<FloodZone[]>>;
     sosRequests: SOSRequest[]; setSosRequests: React.Dispatch<React.SetStateAction<SOSRequest[]>>;
     resources: Resource[];
@@ -23,15 +27,15 @@ interface DdmaDashboardProps {
 
 const DdmaDashboard: React.FC<DdmaDashboardProps> = (props) => {
     const { user } = useAuth();
-    const { activeTab, setActiveTab, floodZones, setFloodZones, alerts, sosRequests, setSosRequests, rescueUsers, ngoData } = props;
+    const { activeTab, setActiveTab, floodZones, setFloodZones, alerts, sosRequests, setSosRequests, rescueUsers, ngoData, isSidebarCollapsed, setIsSidebarCollapsed } = props;
+    const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const mapRef = useRef<any>(null);
 
     useEffect(() => {
-        if (activeTab === 'operations' && mapRef.current) {
-            // Delay to allow the tab content to render before invalidating size
-            setTimeout(() => mapRef.current.invalidateSize(), 100);
+        if (activeTab === 'operations') {
+            setTimeout(() => mapRef.current?.invalidateSize(), 350);
         }
-    }, [activeTab]);
+    }, [activeTab, isSidebarCollapsed, isMobileSidebarOpen]);
 
     const district = user?.district;
     const districtFloodZones = floodZones.filter(z => z.district === district || z.parent === user?.id);
@@ -84,25 +88,25 @@ const DdmaDashboard: React.FC<DdmaDashboardProps> = (props) => {
     const renderContent = () => {
         switch (activeTab) {
             case 'overview': return <DdmOverview {...props} />;
-            case 'operations': return <div className="h-[80vh]"><FloodMap mapRef={mapRef} zones={districtFloodZones} sosRequests={districtSosRequests} showSOS={true} canEdit={true} onAddZone={handleAddZone} onUpdateZone={handleUpdateZone} onDeleteZone={handleDeleteZone} jurisdiction="local" /></div>;
+            case 'operations': return <div className="h-[85vh]"><FloodMap mapRef={mapRef} zones={districtFloodZones} sosRequests={districtSosRequests} showSOS={true} canEdit={true} onAddZone={handleAddZone} onUpdateZone={handleUpdateZone} onDeleteZone={handleDeleteZone} jurisdiction="local" onExit={() => setActiveTab('overview')} /></div>;
             case 'sos': return (
                 <div className="space-y-6">
                     <h2 className="text-2xl font-bold text-gray-900">SOS Requests in {district}</h2>
                     {districtSosRequests.length === 0 ? <p className="text-gray-500">No active SOS requests in your district.</p> :
                     districtSosRequests.map((sos) => (
                         <div key={sos.id} className={`p-4 rounded-lg border-l-4 ${getSeverityClass(sos.severity).border} ${getSeverityClass(sos.severity).bg}`}>
-                            <div className="flex flex-wrap items-center justify-between gap-4">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div className="flex-1 min-w-0">
                                     <p className="font-bold text-lg">{sos.userName} - <span className="font-medium">{sos.description}</span></p>
                                     <p className="text-sm text-gray-600">Location: {sos.location.join(', ')} | Status: <span className="font-semibold">{sos.status}</span></p>
                                     {sos.assignedRescueTeam && <p className="text-sm text-green-700">Assigned to Rescue: {rescueUsers.find(u => u.id === sos.assignedRescueTeam)?.name}</p>}
                                     {sos.assignedNgo && <p className="text-sm text-blue-700">Assigned to NGO: {ngoData.find(n => n.id === sos.assignedNgo)?.name}</p>}
                                 </div>
-                                <div className="flex-shrink-0">
+                                <div className="flex-shrink-0 w-full sm:w-auto">
                                     {sos.status === 'pending' || sos.status === 'assigned' ? (
                                         <div className="flex items-center space-x-2">
                                             <select 
-                                                className="p-2 border rounded-lg bg-white text-sm"
+                                                className="p-2 border rounded-lg bg-white text-sm w-full"
                                                 onChange={(e) => {
                                                     const [type, id] = e.target.value.split('-');
                                                     handleAssignSOS(sos.id, type as 'Rescue' | 'NGO', id);
@@ -146,30 +150,69 @@ const DdmaDashboard: React.FC<DdmaDashboardProps> = (props) => {
             default: return <DdmOverview {...props} />;
         }
     };
+    
+    const SidebarComponent = () => (
+        <AdminSidebar 
+            isCollapsed={isSidebarCollapsed}
+            setIsCollapsed={setIsSidebarCollapsed}
+            sidebarItems={sidebarItems}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+        />
+    );
 
     return (
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex flex-col lg:flex-row gap-8">
-                <div className="lg:w-64">
-                    <nav className="bg-white rounded-lg shadow-sm p-4 sticky top-24">
-                        <div className="space-y-2">
-                            {sidebarItems.map((item) => (
-                                <button
-                                    key={item.id}
-                                    onClick={() => setActiveTab(item.id)}
-                                    className={`w-full flex items-center px-3 py-2 text-left rounded-lg transition-colors ${activeTab === item.id ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100'}`}
-                                >
-                                    <item.icon className="w-5 h-5 mr-3" />
-                                    {item.label}
-                                </button>
-                            ))}
-                        </div>
-                    </nav>
-                </div>
-                <div className="flex-1">
+        <div className="flex h-screen">
+            <div className="hidden lg:flex flex-shrink-0">
+                <SidebarComponent />
+            </div>
+            
+            <AnimatePresence>
+                {isMobileSidebarOpen && (
+                     <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+                            onClick={() => setMobileSidebarOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ x: '-100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '-100%' }}
+                            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                            className="fixed top-0 left-0 h-full w-64 bg-white z-50 lg:hidden"
+                        >
+                            <AdminSidebar 
+                                isCollapsed={false}
+                                setIsCollapsed={() => {}}
+                                sidebarItems={sidebarItems}
+                                activeTab={activeTab}
+                                setActiveTab={(tab) => {
+                                    setActiveTab(tab);
+                                    setMobileSidebarOpen(false);
+                                }}
+                            />
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            <main className="flex-1 flex flex-col">
+                <header className="flex-shrink-0 bg-white shadow-sm h-16 flex items-center justify-between px-4 lg:px-8">
+                    <div className="flex items-center">
+                        <button onClick={() => setMobileSidebarOpen(true)} className="lg:hidden mr-3 p-2 text-gray-600">
+                            <Menu className="w-6 h-6" />
+                        </button>
+                        <h1 className="text-lg md:text-xl font-bold text-gray-800">DDMA Dashboard</h1>
+                    </div>
+                </header>
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
                     {renderContent()}
                 </div>
-            </div>
+            </main>
         </div>
     );
 };

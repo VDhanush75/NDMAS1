@@ -7,7 +7,7 @@ import AdminDashboard from './components/dashboard/AdminDashboard';
 import RescueDashboard from './components/dashboard/RescueDashboard';
 import NgoDashboard from './components/ngo/NgoDashboard';
 import SplashScreen from './components/common/SplashScreen';
-import { FloodZone, SOSRequest, Resource, Alert, NewsReport, User as UserType, NgoData, Task, ResourceRequest, SdmReport } from './types';
+import { FloodZone, SOSRequest, Resource, Alert, NewsReport, User as UserType, NgoData, Task, ResourceRequest, SdmReport, SafeShelter } from './types';
 import { 
     floodZones as initialFloodZones, 
     sosRequests as initialSosRequests, 
@@ -21,7 +21,8 @@ import {
     tasks as initialTasks,
     resourceRequests as initialResourceRequests,
     sdmReports as initialSdmReports,
-    mockCitizens
+    mockCitizens,
+    safeShelters as initialSafeShelters
 } from './data/mockData';
 import './i18n'; // Import i18n configuration
 
@@ -41,12 +42,14 @@ const AppRoutes: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [resourceRequests, setResourceRequests] = useState<ResourceRequest[]>(initialResourceRequests);
   const [sdmReports, setSdmReports] = useState<SdmReport[]>(initialSdmReports);
+  const [safeShelters, setSafeShelters] = useState<SafeShelter[]>(initialSafeShelters);
 
   const sharedProps = {
     floodZones,
     sosRequests,
     alerts,
     newsReports,
+    safeShelters,
   };
 
   const adminDashboardProps = {

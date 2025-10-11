@@ -180,3 +180,12 @@ export interface WeatherData {
     name: string;
     country: string;
 }
+
+export interface SafeShelter {
+  id: string;
+  name: string;
+  district: string;
+  state: string;
+  capacity: number;
+  location: [number, number];
+}

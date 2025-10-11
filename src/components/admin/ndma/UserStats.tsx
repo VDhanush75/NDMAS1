@@ -36,7 +36,7 @@ const UserStats: React.FC<UserStatsProps> = ({ users, sosRequests, resources }) 
                 <h2 className="text-2xl font-bold text-gray-900">NDMA National Overview</h2>
                 <p className="text-gray-600">Real-time statistics from across the country.</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 <StatCard icon={<Users className="w-7 h-7 text-blue-600" />} title="Total Citizen Users" value={totalUsers.toLocaleString()} color="bg-blue-100" />
                 <StatCard icon={<UserCheck className="w-7 h-7 text-green-600" />} title="Active Users" value={activeUsers.toLocaleString()} color="bg-green-100" />
                 <StatCard icon={<UserX className="w-7 h-7 text-orange-600" />} title="Inactive Users" value={inactiveUsers.toLocaleString()} color="bg-orange-100" />
